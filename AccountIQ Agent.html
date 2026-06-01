@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AccountIQ v5 — AI Customer Knowledge Agent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0F1B2D;--accent:#2E86DE;--accent-light:#E6F1FB;
+  --green:#1E8449;--green-light:#D5F5E3;--red-light:#FCEBEB;--amber-light:#FAEEDA;
+  --border:#E0E6ED;--border2:#C8D3DC;
+  --bg:#FFFFFF;--bg2:#F5F7FA;--bg3:#EEF1F5;
+  --text:#1A1A2E;--muted:#6B7280;--hint:#9CA3AF;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif
+}
+body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--bg3);height:100vh;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:48px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:28px;height:28px;background:var(--navy);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px}
+.logo-name{font-size:15px;font-weight:600}
+.logo-tag{font-size:11px;color:var(--hint);margin-left:2px}
+.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.live-text{font-size:12px;color:var(--muted)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+
+/* LAYOUT */
+.body{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-top{flex:1;overflow-y:auto;padding:14px 0}
+.sidebar-sec{padding:0 12px;margin-bottom:16px}
+.sidebar-lbl{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--hint);padding:0 6px;margin-bottom:6px}
+.cust{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .15s}
+.cust:hover{background:var(--bg2)}
+.cust.active{background:var(--accent-light)}
+.av{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.av-b{background:#B5D4F4;color:#0C447C}
+.av-a{background:#FAC775;color:#633806}
+.av-g{background:#C0DD97;color:#27500A}
+.cust-name{font-size:13px;font-weight:500;line-height:1.2}
+.cust.active .cust-name{color:#0C447C}
+.cust-signals{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
+.sig{font-size:10px;padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;font-weight:600}
+.sig-risk{background:var(--red-light);color:#791F1F}
+.sig-opp{background:var(--green-light);color:#085041}
+.sig-pending{background:var(--amber-light);color:#633806}
+.src-list{padding:0 6px}
+.src-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;color:var(--muted)}
+.src-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border);flex-shrink:0}
+.how-btn{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--hint);padding:7px 8px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);transition:all .15s}
+.how-btn:hover{color:var(--text)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;padding:0 20px}
+.tab{padding:11px 14px;font-size:13px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.tab-content{flex:1;overflow-y:auto;padding:20px}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* CARDS */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.card:last-child{margin-bottom:0}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.card-hd-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--hint);display:flex;align-items:center;gap:6px}
+.card-body{padding:14px 16px}
+
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* UPDATE CARDS */
+.upd-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:8px}
+.upd-card:last-child{margin-bottom:0}
+.upd-meta{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.upd-src{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em}
+.src-m{background:#E6F1FB;color:#0C447C}
+.src-h{background:#FAC775;color:#633806}
+.src-am{background:#C0DD97;color:#27500A}
+.src-e{background:#EEEDFE;color:#3C3489}
+.upd-time{font-size:11px;color:var(--hint)}
+.upd-text{font-size:13px;color:var(--text);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.upd-footer{margin-top:7px}
+.view-link{font-size:11px;color:var(--accent);cursor:pointer;display:inline-flex;align-items:center;gap:3px;font-weight:500}
+.view-link:hover{text-decoration:underline}
+
+.add-upd-btn{width:100%;padding:8px;border:1.5px dashed var(--border2);border-radius:8px;background:none;font-size:12px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;transition:all .15s;font-family:var(--font)}
+.add-upd-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+.process-btn{width:100%;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:10px;transition:background .15s;font-family:var(--font)}
+.process-btn:hover{background:#1A2D47}
+
+/* PROFILE SNAPSHOT */
+.snap-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.snap-item{background:var(--bg2);border-radius:8px;padding:9px 11px}
+.snap-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--hint);margin-bottom:5px}
+.tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;border-radius:4px;margin:2px 2px 2px 0;font-weight:500}
+.tag-r{background:var(--red-light);color:#791F1F}
+.tag-o{background:var(--green-light);color:#085041}
+.tag-c{background:var(--accent-light);color:#0C447C}
+.tag-p{background:var(--amber-light);color:#633806}
+.next-actions{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.next-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--hint);margin-bottom:7px}
+.action-row{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--text);line-height:1.5;margin-bottom:4px}
+.view-full-btn{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);font-size:12px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;margin-top:12px;transition:all .15s;font-family:var(--font)}
+.view-full-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* PROFILE TAB */
+.profile-note{width:100%;min-height:340px;padding:14px 16px;font-family:var(--font);font-size:13px;line-height:1.8;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:8px;outline:none;overflow-y:auto;max-height:520px}
+.profile-note:focus{border-color:var(--accent)}
+.profile-note .section-header{font-size:13px;font-weight:700;color:var(--text);margin-top:14px;margin-bottom:4px;display:block}
+.profile-note .account-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:2px;display:block}
+.profile-note .meta-line{font-size:12px;color:var(--hint);margin-bottom:10px;display:block}
+.save-bar{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.save-hint{font-size:12px;color:var(--hint)}
+.save-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font)}
+.save-btn:hover{background:#1A2D47}
+
+/* BRIEF TAB */
+.brief-layout{display:grid;grid-template-columns:200px 1fr;gap:14px}
+.brief-types-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:6px}
+.brief-types{display:flex;flex-direction:column;gap:7px}
+.brief-type{padding:11px 13px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;background:var(--bg)}
+.brief-type:hover{border-color:var(--accent);background:var(--accent-light)}
+.brief-type.active{border-color:var(--accent);background:var(--accent-light)}
+.brief-type-icon{font-size:18px;margin-bottom:4px}
+.brief-type-name{font-size:12px;font-weight:500;color:var(--text)}
+.brief-type.active .brief-type-name{color:#0C447C}
+.brief-type-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.brief-output-wrap{display:flex;flex-direction:column}
+.brief-toolbar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--bg2);border:1px solid var(--border);border-bottom:none;border-radius:12px 12px 0 0}
+.brief-toolbar-left{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.brief-toolbar-right{display:flex;gap:6px}
+.tbtn{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;font-size:11px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);cursor:pointer;font-family:var(--font);font-weight:500;transition:all .15s}
+.tbtn:hover{background:var(--bg2)}
+.tbtn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tbtn-primary:hover{background:#1A2D47}
+.brief-box{border:1px solid var(--border);border-radius:0 0 12px 12px;background:var(--bg);padding:16px 18px;min-height:320px;max-height:480px;overflow-y:auto;font-size:13px;line-height:1.75;color:var(--text);outline:none}
+.brief-box:focus{border-color:var(--accent)}
+.brief-section{margin-bottom:16px}
+.brief-section:last-child{margin-bottom:0}
+.brief-sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:7px}
+.brief-p{font-size:13px;color:var(--text);line-height:1.75;margin-bottom:6px}
+.brief-bullet{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text);line-height:1.7;margin-bottom:8px}
+.brief-bullet-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:7px;min-width:6px}
+.brief-bullet strong{color:var(--navy);font-weight:600}
+.brief-bullet-text{flex:1;min-width:0}
+.sources-bar{border-top:1px solid var(--border);padding-top:11px;margin-top:11px}
+.src-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--hint);margin-bottom:6px}
+.src-cite{font-size:11px;color:var(--muted);margin-bottom:4px;padding-left:10px}
+
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border-radius:14px;border:1px solid var(--border);width:500px;max-width:92vw;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-title{font-size:14px;font-weight:600}
+.modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:16px;font-weight:300;transition:all .15s;line-height:1}
+.modal-close:hover{background:var(--red-light);color:#791F1F}
+.modal-body{padding:16px 18px;overflow-y:auto;font-size:13px;line-height:1.75;color:var(--text);flex:1}
+.modal-body .note-header{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.07em;padding-bottom:8px;margin-bottom:12px;border-bottom:1px solid var(--border)}
+.modal-body .note-meta{font-size:11px;color:var(--hint);margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap}
+.modal-body .note-section{margin-bottom:12px}
+.modal-body .note-section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.modal-body .note-line{font-size:13px;color:var(--text);line-height:1.7;padding-left:0}
+.modal-body .note-bullet{display:flex;gap:8px;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:3px}
+.modal-body .note-bullet-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:8px}
+.modal-body .note-quote{background:var(--bg2);border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 6px 6px 0;font-size:13px;color:var(--text);line-height:1.7;margin:8px 0;font-style:italic}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-src-link{font-size:12px;color:var(--accent);cursor:pointer;font-weight:500}
+.modal-src-link:hover{text-decoration:underline}
+.form-group{margin-bottom:14px}
+.form-lbl{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;display:block}
+.form-select,.form-textarea{width:100%;padding:9px 12px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg2);border:1px solid var(--border);border-radius:8px;outline:none;transition:border-color .15s}
+.form-select:focus,.form-textarea:focus{border-color:var(--accent);background:var(--bg)}
+.form-textarea{min-height:110px;resize:none}
+.arch-flow{display:flex;flex-direction:column;gap:8px}
+.arch-node{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:13px}
+.arch-node-icon{font-size:16px;flex-shrink:0}
+.arch-node.hl{background:var(--navy);border-color:var(--navy);color:#fff}
+.arch-arrow{text-align:center;color:var(--hint);font-size:13px;padding:2px 0}
+.arch-note{font-size:12px;color:var(--hint);font-style:italic;margin-top:10px;line-height:1.6;padding:10px 12px;background:var(--bg2);border-radius:8px;border:1px solid var(--border)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--navy);color:#fff;font-size:12px;padding:9px 18px;border-radius:20px;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap;font-weight:500}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-mark">&#129504;</div>
+      <span class="logo-name">AccountIQ</span>
+      <span class="logo-tag">— AI Customer Knowledge Agent</span>
+    </div>
+    <div class="topbar-right">
+      <div class="live-dot"></div>
+      <span class="live-text">3 customers &middot; 4 sources connected</span>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;background:#D5F5E3;color:#085041;padding:5px 12px;border-radius:20px;font-weight:500"><div style="width:7px;height:7px;background:#1E8449;border-radius:50%"></div>AI Agent Active</div><input type="hidden" id="apiKeyInput" value="demo" />
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-sec">
+          <div class="sidebar-lbl">Customers</div>
+          <div id="cust-abc" class="cust active" onclick="selectCustomer('abc')">
+            <div class="av av-b">AH</div>
+            <div>
+              <div class="cust-name">ABC Healthcare</div>
+              <div class="cust-signals" id="sig-abc"></div>
+            </div>
+          </div>
+          <div id="cust-northstar" class="cust" onclick="selectCustomer('northstar')">
+            <div class="av av-a">NL</div>
+            <div>
+              <div class="cust-name">Northstar Logistics</div>
+              <div class="cust-signals" id="sig-northstar"></div>
+            </div>
+          </div>
+          <div id="cust-brightpath" class="cust" onclick="selectCustomer('brightpath')">
+            <div class="av av-g">BP</div>
+            <div>
+              <div class="cust-name">BrightPath Software</div>
+              <div class="cust-signals" id="sig-brightpath"></div>
+            </div>
+          </div>
+        </div>
+        <div class="sidebar-sec">
+          <div class="sidebar-lbl">Connected Sources</div>
+          <div class="src-list">
+            <div class="src-row"><div class="src-dot"></div>Meeting Notes</div>
+            <div class="src-row"><div class="src-dot"></div>Email Summaries</div>
+            <div class="src-row"><div class="src-dot"></div>HubSpot Tickets</div>
+            <div class="src-row"><div class="src-dot"></div>AM Updates</div>
+          </div>
+          <div style="padding:8px 6px 0;font-size:11px;color:var(--hint);font-style:italic;line-height:1.5">Sources simulated for MVP. Automation-ready architecture.</div>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="how-btn" onclick="openModal('how-modal')">&#9432; How this works</div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('dashboard')">Dashboard</div>
+        <div class="tab" onclick="showTab('profile')">Customer Profile</div>
+        <div class="tab" onclick="showTab('brief')">Generate Brief</div>
+      </div>
+
+      <div class="tab-content">
+
+        <!-- DASHBOARD -->
+        <div id="tab-dashboard" class="tab-pane active">
+          <div class="dash-grid">
+            <div>
+              <div class="card">
+                <div class="card-hd">
+                  <div class="card-hd-title">&#128230; Pending updates</div>
+                  <span id="pending-count-label" style="font-size:11px;color:var(--hint)"></span>
+                </div>
+                <div class="card-body">
+                  <div id="updates-feed"></div>
+                  <button class="add-upd-btn" onclick="openModal('add-upd-modal')">+ Add update</button>
+                  <button class="process-btn" id="process-btn" onclick="processUpdates()">&#129504; Process pending updates</button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="card-hd">
+                  <div class="card-hd-title">&#128100; Profile snapshot</div>
+                  <span id="snapshot-updated" style="font-size:11px;color:var(--hint)"></span>
+                </div>
+                <div class="card-body">
+                  <div class="snap-grid">
+                    <div class="snap-item">
+                      <div class="snap-lbl">Contacts</div>
+                      <div id="snap-contacts"></div>
+                    </div>
+                    <div class="snap-item">
+                      <div class="snap-lbl">Priorities</div>
+                      <div id="snap-priorities"></div>
+                    </div>
+                    <div class="snap-item">
+                      <div class="snap-lbl">Risks</div>
+                      <div id="snap-risks"></div>
+                    </div>
+                    <div class="snap-item">
+                      <div class="snap-lbl">Opportunities</div>
+                      <div id="snap-opps"></div>
+                    </div>
+                  </div>
+                  <div class="next-actions">
+                    <div class="next-lbl">Recommended next actions</div>
+                    <div id="snap-actions"></div>
+                  </div>
+                  <button class="view-full-btn" onclick="showTab('profile')">&#128196; View full customer profile</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CUSTOMER PROFILE -->
+        <div id="tab-profile" class="tab-pane">
+          <div class="card">
+            <div class="card-hd">
+              <div class="card-hd-title" id="profile-tab-title">&#128196; Full customer profile</div>
+              <span style="font-size:11px;color:var(--hint)">Click anywhere to edit</span>
+            </div>
+            <div class="card-body">
+              <div class="profile-note" id="profileNote" contenteditable="true"></div>
+              <div class="save-bar">
+                <span class="save-hint" id="saveHint">Edits here will be used when generating briefs</span>
+                <button class="save-btn" onclick="saveProfile()">&#128190; Save profile</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GENERATE BRIEF -->
+        <div id="tab-brief" class="tab-pane">
+          <div class="brief-layout">
+            <div>
+              <div class="brief-types-lbl">Select brief type</div>
+              <div class="brief-types">
+                <div class="brief-type active" onclick="selectBrief(this,'onboarding')">
+                  <div class="brief-type-icon">&#128100;</div>
+                  <div class="brief-type-name">New Team Member</div>
+                  <div class="brief-type-desc">Onboarding brief</div>
+                </div>
+                <div class="brief-type" onclick="selectBrief(this,'meeting')">
+                  <div class="brief-type-icon">&#128101;</div>
+                  <div class="brief-type-name">Internal Meeting</div>
+                  <div class="brief-type-desc">Team alignment</div>
+                </div>
+                <div class="brief-type" onclick="selectBrief(this,'callprep')">
+                  <div class="brief-type-icon">&#128222;</div>
+                  <div class="brief-type-name">Call Prep</div>
+                  <div class="brief-type-desc">Customer call</div>
+                </div>
+                <div class="brief-type" onclick="selectBrief(this,'executive')">
+                  <div class="brief-type-icon">&#128202;</div>
+                  <div class="brief-type-name">Executive Summary</div>
+                  <div class="brief-type-desc">Leadership overview</div>
+                </div>
+              </div>
+            </div>
+            <div class="brief-output-wrap">
+              <div class="brief-toolbar">
+                <div class="brief-toolbar-left" id="briefTypeLabel">New team member onboarding</div>
+                <div class="brief-toolbar-right">
+                  <button class="tbtn" onclick="copyBrief()">&#128203; Copy</button>
+                  <button class="tbtn" onclick="exportPDF()">&#128196; PDF</button>
+                  <button class="tbtn tbtn-primary" onclick="openEmail()">&#9993; Open in mail</button>
+                </div>
+              </div>
+              <div class="brief-box" id="briefBox" contenteditable="true"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE DETAIL MODAL -->
+<div class="modal-overlay" id="upd-modal" onclick="closeModalOutside(event,'upd-modal')">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="updModalTitle"></div>
+      <div class="modal-close" onclick="closeModal('upd-modal')">&#10005;</div>
+    </div>
+    <div class="modal-body" id="updModalBody"></div>
+    <div class="modal-footer">
+      <span style="font-size:12px;color:var(--hint)" id="updModalTime"></span>
+      <div class="modal-src-link">&#128279; View original source</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD UPDATE MODAL -->
+<div class="modal-overlay" id="add-upd-modal" onclick="closeModalOutside(event,'add-upd-modal')">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">Add account manager update</div>
+      <div class="modal-close" onclick="closeModal('add-upd-modal')">&#10005;</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-lbl">Update type</label>
+        <select class="form-select" id="newUpdType">
+          <option value="AM Update">Account Manager Update</option>
+          <option value="Meeting Notes">Meeting Notes</option>
+          <option value="Email Summary">Email Summary</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Update content</label>
+        <textarea class="form-textarea" id="newUpdContent" placeholder="Describe what happened, what was discussed, or any important context..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span style="font-size:12px;color:var(--hint)">Will appear in pending updates feed</span>
+      <button class="save-btn" onclick="submitUpdate()">+ Add update</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOW THIS WORKS MODAL -->
+<div class="modal-overlay" id="how-modal" onclick="closeModalOutside(event,'how-modal')">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">How AccountIQ works</div>
+      <div class="modal-close" onclick="closeModal('how-modal')">&#10005;</div>
+    </div>
+    <div class="modal-body">
+      <div class="arch-flow">
+        <div class="arch-node"><span class="arch-node-icon">&#128196;</span><span>Meeting Notes &middot; Email Summaries &middot; HubSpot Tickets &middot; AM Updates</span></div>
+        <div class="arch-arrow">&#8595;</div>
+        <div class="arch-node hl"><span class="arch-node-icon">&#9889;</span><span>Zapier / Make / n8n &mdash; automation layer routes updates to agent</span></div>
+        <div class="arch-arrow">&#8595;</div>
+        <div class="arch-node hl"><span class="arch-node-icon">&#129504;</span><span>AccountIQ Agent &mdash; reads, extracts facts, categorizes, updates profile</span></div>
+        <div class="arch-arrow">&#8595;</div>
+        <div class="arch-node"><span class="arch-node-icon">&#128203;</span><span>Updated customer profile + stakeholder-specific briefs + risk signals</span></div>
+      </div>
+      <div class="arch-note">The MVP simulates source integrations. Future versions connect directly through APIs and webhooks via Zapier, Make, or n8n.</div>
+    </div>
+    <div class="modal-footer">
+      <span></span>
+      <button class="save-btn" onclick="closeModal('how-modal')">Got it</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── SIMULATED DATA LAYER ───────────────────────────────────────────
+const CUSTOMERS = {
+  abc: {
+    name: 'ABC Healthcare',
+    updatedLabel: 'Last updated May 28',
+    pending: [
+      { src: 'Meeting Notes', srcClass: 'src-m', time: 'May 31, 2026 · 10:00 AM',
+        short: 'Q2 Account Review — oncology expansion confirmed as Q3 priority, budget sign-off pending.',
+        full: 'MEETING NOTES — Q2 Account Review\nDate: May 31, 2026 · 10:00–10:45 AM\nAttendees: Emily Chen (ABC Healthcare), Sarah Okafor (AM), James Wu (Solutions)\n\nKey Discussion Points:\n• Client confirmed oncology expansion as top Q3 initiative\n• Budget approval deferred — procurement review in progress, est. 4-6 weeks\n• Emily requested a detailed project proposal by June 15\n• Implementation roadmap discussed — team aligned pending budget sign-off\n\nTone: Positive and engaged. Client motivated to move forward.' },
+      { src: 'HubSpot Ticket', srcClass: 'src-h', time: 'May 31, 2026 · 2:14 PM',
+        short: 'Ticket #5821 · High Priority — revised implementation timeline requested due to procurement delays.',
+        full: 'HUBSPOT TICKET #5821\nSubmitted: May 31, 2026 at 2:14 PM\nPriority: High\nSubmitted by: emily.chen@abchealthcare.org\nAssigned to: Implementation Team\n\nDescription:\n"Our internal procurement team has pushed back budget approval, which will delay the implementation start. We need a revised project timeline that accounts for a 4-6 week delay from the original schedule. Please send an updated plan by end of this week."\n\nStatus: Open · Awaiting response' },
+      { src: 'AM Update', srcClass: 'src-am', time: 'May 31, 2026 · 4:30 PM',
+        short: 'Emily Chen flagged as potential departure risk next month — stakeholder transition planning needed.',
+        full: 'AM FIELD NOTE — Sarah Okafor\nDate: May 31, 2026\n\nHeads up on a sensitive situation: Emily Chen mentioned informally after the meeting that she may be leaving ABC Healthcare next month following an internal restructuring announcement. This has not been formally confirmed.\n\nDavid Smith (Implementation Lead) is the most likely replacement as primary contact but this is also unconfirmed.\n\nRecommended action: Schedule a stakeholder alignment call before end of June to ensure continuity. Do not raise the departure topic directly with the client yet.' },
+    ],
+    profile: { contacts: ['Emily Chen','David Smith'], priorities: ['Oncology Expansion','Implementation'], risks: ['Budget Timeline Unconfirmed'], opps: ['Q3 Expansion','New Stakeholders'], actions: ['Confirm budget approval timeline on next call','Confirm implementation timeline status','Follow up on oncology expansion proposal'] },
+    profileNote: `ABC Healthcare — Customer Profile
+Last updated: May 28, 2026
+
+ACCOUNT OVERVIEW
+ABC Healthcare has been a customer since 2022. The relationship is active with ongoing oncology expansion discussions for Q3 2026. Budget approval is in progress.
+
+KEY CONTACTS
+- Emily Chen (Primary stakeholder)
+- David Smith (Secondary, implementation lead)
+
+CURRENT PRIORITIES
+- Oncology expansion scoping for Q3 2026
+- Budget sign-off from finance team
+- Implementation planning
+
+ACTIVE RISKS
+- Budget approval timeline not yet confirmed
+
+OPPORTUNITIES
+- Q3 oncology expansion represents significant upsell potential
+
+RECENT ACTIVITY
+- May 28: Account reviewed — awaiting field updates from upcoming meetings`,
+    briefs: {
+      onboarding: `<div class="brief-section"><div class="brief-sec-title">Account overview</div><div class="brief-p">ABC Healthcare has been a customer since 2022. The relationship is active and positive, with an important Q3 oncology expansion on the table. Before engaging with this account, you need to understand two things: a budget delay that is pushing against a June 15 proposal deadline, and a key stakeholder transition that could disrupt the deal if not managed proactively.</div></div><div class="brief-section"><div class="brief-sec-title">Who you are working with</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Emily Chen</strong> — Your primary contact, but may be departing next month. Do not raise this directly with her. Start building a parallel relationship with David Smith now.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>David Smith</strong> — Implementation lead and likely incoming primary. Treat him as a future decision maker from day one.</div></div></div><div class="brief-section"><div class="brief-sec-title">What this account is focused on right now</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Oncology expansion for Q3</strong> — Client confirmed interest at the May 31 meeting. A formal proposal is due June 15. This is the deal to close.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Budget approval</strong> — Procurement review is ongoing, estimated 4-6 week delay. Understanding the exact approval date is your first priority on the first call.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Implementation timeline revision</strong> — Ticket #5821 is open and unanswered. The client is waiting for a revised plan. Respond before the end of this week.</div></div></div><div class="brief-section"><div class="brief-sec-title">What to watch out for</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Stakeholder gap before the deal closes</strong> — If Emily leaves before the proposal is signed and David is not yet aligned, the deal stalls. Start that relationship now.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Deadline collision</strong> — Budget approval at 4-6 weeks could push past June 15. If that happens, the Q3 expansion slips to Q4. Clarify this on your first call.</div></div></div><div class="brief-section"><div class="brief-sec-title">Your first week priorities</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Schedule introductory calls with both Emily Chen and David Smith</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Respond to HubSpot Ticket #5821 with a revised implementation timeline</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Confirm budget approval date on your first call — this drives everything else</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Begin drafting the oncology expansion proposal for the June 15 deadline</div></div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">Meeting Notes · May 31 — Q2 Account Review, oncology expansion confirmed, budget deferred, proposal due June 15</div><div class="src-cite">HubSpot Ticket #5821 · May 31 — revised implementation timeline requested, 4-6 week procurement delay</div><div class="src-cite">AM Field Note · May 31 — Emily Chen potential departure, David Smith as likely successor</div></div>`,
+      meeting: `<div class="brief-section"><div class="brief-sec-title">Situation summary</div><div class="brief-p">The ABC Healthcare expansion deal is at risk of slipping if the team does not move quickly. Budget approval is delayed 4-6 weeks, the proposal deadline is June 15, the primary stakeholder may be departing, and HubSpot Ticket #5821 is still unanswered. This meeting should result in clear ownership of each open item.</div></div><div class="brief-section"><div class="brief-sec-title">Open issues that need owners today</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>HubSpot Ticket #5821 is unanswered</strong> — Client is waiting for a revised implementation timeline. Who owns this response and when does it go out?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Proposal ownership unclear</strong> — June 15 deadline requires an internal draft by June 12 at the latest. Who is leading and what is the review process?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>No stakeholder transition plan</strong> — Emily may depart before the proposal closes. Who is building the relationship with David Smith?</div></div></div><div class="brief-section"><div class="brief-sec-title">Key risks on the table</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Budget delay vs June 15 deadline</strong> — 4-6 weeks of procurement delay may push past the proposal deadline. Does the team need to reset client expectations now?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Stakeholder gap</strong> — No formal handoff plan between Emily and David. If Emily leaves mid-deal, continuity is at risk.</div></div></div><div class="brief-section"><div class="brief-sec-title">Discussion questions</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Who owns Ticket #5821 and what is the committed delivery date for the revised timeline?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Who is drafting the expansion proposal and what is the internal deadline to allow time for review?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Should we proactively reach out to David Smith now or wait for Emily to make the introduction?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Do we need to flag the budget delay risk to the client and potentially reset the June 15 deadline?</div></div></div><div class="brief-section"><div class="brief-sec-title">Action items — assign before leaving this meeting</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Respond to HubSpot Ticket #5821 — owner: [assign], due: end of this week</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Begin expansion proposal draft — owner: [assign], internal due: June 12</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Initiate relationship with David Smith — owner: AM, due: this week</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Confirm budget approval timeline on next client call — owner: AM</div></div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">Meeting Notes · May 31 — Q2 Account Review, oncology expansion confirmed, budget deferred, proposal due June 15</div><div class="src-cite">HubSpot Ticket #5821 · May 31 — revised implementation timeline requested, 4-6 week procurement delay</div><div class="src-cite">AM Field Note · May 31 — Emily Chen potential departure, David Smith as likely successor</div></div>`,
+      callprep: `<div class="brief-section"><div class="brief-sec-title">What happened since the last call</div><div class="brief-p">A HubSpot ticket came in requesting a revised implementation timeline (Ticket #5821). The budget approval process is still ongoing. Emily Chen may be transitioning out. Open this call by acknowledging the ticket proactively — it shows responsiveness.</div></div><div class="brief-section"><div class="brief-sec-title">Recommended talking order</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>1. Open with the ticket</strong> — Acknowledge Ticket #5821 first. "We received your request for a revised timeline — let me walk you through our updated thinking." This sets a responsive, professional tone.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>2. Proposal timeline</strong> — Confirm the June 15 deadline is still the target. Ask Emily what a strong proposal looks like to her — scope, format, what decisions it needs to enable.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>3. Budget approval</strong> — Ask specifically who needs to sign off, what the internal process looks like, and whether there is anything you can provide to help accelerate it.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>4. Stakeholder continuity</strong> — Without raising the departure directly, find a natural reason to include David Smith: "Would it make sense to loop David in on the implementation planning given his role?"</div></div></div><div class="brief-section"><div class="brief-sec-title">Risks to watch for on this call</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Budget delay past June 15</strong> — If you sense the approval will not come before the deadline, surface it now rather than letting it become a surprise later.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Scope uncertainty</strong> — If Emily is vague about the proposal scope, pin it down on this call. A vague June 15 deadline is worse than a clear later deadline.</div></div></div><div class="brief-section"><div class="brief-sec-title">Questions to ask — use these verbatim</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"What does the budget approval process look like on your end — who are the key sign-offs and is there anything we can provide to help move it forward?"</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"Is the June 15 deadline still realistic given the procurement timeline, or should we be planning for a revised schedule?"</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"What would a strong proposal look like to you — what are the two or three things that would make the decision easy?"</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"Would it be useful to include David in future calls so he has full context on the implementation planning?"</div></div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">Meeting Notes · May 31 — Q2 Account Review, oncology expansion confirmed, budget deferred, proposal due June 15</div><div class="src-cite">HubSpot Ticket #5821 · May 31 — revised implementation timeline requested, 4-6 week procurement delay</div><div class="src-cite">AM Field Note · May 31 — Emily Chen potential departure, David Smith as likely successor</div></div>`,
+      executive: `<div class="brief-section"><div class="brief-sec-title">Bottom line</div><div class="brief-p">ABC Healthcare is a healthy account with a time-sensitive upsell opportunity at risk of slipping. The Q3 oncology expansion is confirmed with a June 15 proposal deadline, but a 4-6 week budget delay and an emerging stakeholder transition are creating execution risk. If the team moves quickly, this deal closes in Q3. If not, it slips to Q4 or later.</div></div><div class="brief-section"><div class="brief-sec-title">What is happening</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Q3 Oncology Expansion confirmed</strong> — Client committed at the May 31 QBR. Proposal due June 15. High-value, time-sensitive opportunity.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Budget approval delayed 4-6 weeks</strong> — Procurement review ongoing. May push past the June 15 proposal deadline if not managed.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Primary stakeholder Emily Chen may depart next month</strong> — No transition plan exists. David Smith is the likely replacement but has not been engaged.</div></div></div><div class="brief-section"><div class="brief-sec-title">Business risk</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Revenue timing impact</strong> — A Q3 to Q4 slip on this deal has direct revenue implications. The window to prevent this closes around June 8-10.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Relationship risk</strong> — If Emily departs before the proposal is signed and we have not built a relationship with David, the deal could stall entirely.</div></div></div><div class="brief-section"><div class="brief-sec-title">What needs to happen</div><div class="brief-p">The team needs to deliver the expansion proposal by June 15, respond to the open implementation ticket this week, and begin building a relationship with David Smith immediately. Budget approval timing needs to be confirmed on the next client call. If approval will not come before June 15, the team needs to proactively reset the deadline rather than miss it.</div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">Meeting Notes · May 31 — Q2 Account Review, oncology expansion confirmed, budget deferred, proposal due June 15</div><div class="src-cite">HubSpot Ticket #5821 · May 31 — revised implementation timeline requested, 4-6 week procurement delay</div><div class="src-cite">AM Field Note · May 31 — Emily Chen potential departure, David Smith as likely successor</div></div>`
+    }
+  },
+  northstar: {
+    name: 'Northstar Logistics',
+    updatedLabel: 'Last updated May 25',
+    pending: [
+      { src: 'HubSpot Ticket', srcClass: 'src-h', time: 'May 30, 2026 · 9:02 AM',
+        short: 'Ticket #7743 · P1 Critical — WMS integration failure causing shipment tracking loss.',
+        full: 'HUBSPOT TICKET #7743\nSubmitted: May 30, 2026 at 9:02 AM\nPriority: P1 — Critical\nSubmitted by: maria.lopez@northstarlogistics.com\nAssigned to: Engineering — Escalated\n\nDescription:\n"The WMS integration has been failing intermittently since the May 28 platform update. We are losing real-time visibility into shipment tracking across 3 distribution centers. This is impacting daily operations. This is the third integration issue we have experienced this quarter and our leadership team is losing confidence in the platform."\n\nStatus: Open · Engineering investigating · SLA breach risk' },
+      { src: 'Email Summary', srcClass: 'src-e', time: 'May 29, 2026 · 3:47 PM',
+        short: 'Email from James Tran (VP Ops) — renewal concern raised, evaluating 2 competitor solutions.',
+        full: 'EMAIL SUMMARY — Inbound\nFrom: james.tran@northstarlogistics.com\nTo: sarah.okafor@company.com\nDate: May 29, 2026 at 3:47 PM\nSubject: Re: Q3 Contract Renewal\n\nSummary:\nJames Tran expressed concern about renewing the contract given the pattern of technical issues this quarter. He stated they are currently evaluating two competitor solutions and will make a decision before Q3. Tone was measured but firm — this is a serious signal.\n\nKey quote: "We need to see demonstrated reliability before committing to another year. Our ops team cannot afford continued disruptions."\n\nAction required: Executive escalation — do not leave this to AM alone.' },
+    ],
+    profile: { contacts: ['James Tran','Maria Lopez'], priorities: ['WMS Integration Stability','Contract Renewal Q3'], risks: ['WMS Integration Issues','Contract Renewal Risk'], opps: ['Relationship Strengthening Pre-Renewal'], actions: ['Monitor WMS integration status','Prepare renewal conversation strategy','Schedule check-in with James Tran'] },
+    profileNote: `Northstar Logistics — Customer Profile
+Last updated: May 25, 2026
+
+ACCOUNT OVERVIEW
+Northstar Logistics has been a customer since 2021. The relationship has experienced some technical challenges recently. Contract renewal is approaching in Q3 2026.
+
+KEY CONTACTS
+- James Tran (VP Operations) — Primary stakeholder
+- Maria Lopez (IT Lead) — Technical contact
+
+CURRENT PRIORITIES
+- Platform reliability and WMS integration stability
+- Contract renewal preparation for Q3 2026
+
+ACTIVE RISKS
+- Recurring WMS integration issues affecting customer satisfaction
+- Contract renewal decision approaching
+
+OPPORTUNITIES
+- Resolving technical issues could strengthen the relationship before renewal
+- Early renewal conversation could lock in commitment
+
+RECENT ACTIVITY
+- May 25: Account reviewed — monitoring WMS integration stability
+- May 25: Contract renewal timeline being tracked for Q3`,
+    briefs: {
+      onboarding: `<div class="brief-section"><div class="brief-sec-title">Account overview</div><div class="brief-p">Northstar Logistics has been a customer since 2021. This is currently one of the highest-risk accounts in the portfolio. Three technical incidents this quarter have significantly damaged trust, and the VP of Operations has confirmed in writing that they are evaluating two competitor solutions ahead of Q3 renewal. Your job on this account is not to sell — it is to demonstrate reliability and stop the churn.</div></div><div class="brief-section"><div class="brief-sec-title">Who you are working with</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>James Tran (VP Operations)</strong> — Renewal decision maker. Has confirmed competitor evaluation in writing. Needs to hear from a senior stakeholder, not just the AM. His trust has been damaged by a pattern of incidents.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Maria Lopez (IT Lead)</strong> — Technical contact managing the P1 WMS failure day-to-day. Frustrated but pragmatic. A fast, professional fix will help rebuild her confidence.</div></div></div><div class="brief-section"><div class="brief-sec-title">What is happening right now</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>P1 WMS Integration Failure (Ticket #7743)</strong> — Three distribution centers are losing real-time shipment visibility. Third technical incident this quarter. Engineering is investigating but no fix has shipped.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Competitor evaluation confirmed</strong> — James Tran emailed May 29 stating they are evaluating two alternatives. His quote: "We need to see demonstrated reliability before committing to another year."</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Contract renewal approaching in Q3</strong> — Competitor demos may already be underway. The window to intervene is narrow.</div></div></div><div class="brief-section"><div class="brief-sec-title">What you need to know before engaging</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Do not contact James Tran until the P1 fix is confirmed shipped. Reaching out while the issue is open will make things worse.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Any renewal conversation must be led by a senior stakeholder — not the AM. James needs to feel that leadership takes this seriously.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">The retention play is: fix the issue fast, acknowledge the pattern directly, commit to reliability, then offer early renewal with an SLA.</div></div></div><div class="brief-section"><div class="brief-sec-title">Your first priorities</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Confirm P1 fix ETA from engineering — today</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Schedule executive call with James Tran within 48 hours of the fix</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Prepare reliability narrative before the call</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Research the two competitor solutions being evaluated</div></div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">HubSpot Ticket #7743 · May 30 — P1 WMS integration failure, three distribution centers impacted, third incident this quarter</div><div class="src-cite">Email Summary · May 29 — James Tran renewal warning, competitor evaluation confirmed in writing</div></div>`,
+      meeting: `<div class="brief-section"><div class="brief-sec-title">Situation summary</div><div class="brief-p">Northstar Logistics is at serious churn risk. A P1 WMS failure is unresolved, James Tran has confirmed competitor evaluation in writing, and no executive outreach has been made since his May 29 email. This meeting needs to produce a clear action plan with named owners and dates — delay is making this worse.</div></div><div class="brief-section"><div class="brief-sec-title">Open issues requiring decisions today</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>P1 fix has no committed ETA</strong> — Engineering is investigating but leadership has not committed to a resolution date. What is the timeline and who is accountable?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>No executive response to James Tran email</strong> — His May 29 email has been received but not acted on. Two days have passed. Who is owning this response?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>No competitive intelligence gathered</strong> — We do not know which two competitors are being evaluated or where they are in the process. Who is finding this out?</div></div></div><div class="brief-section"><div class="brief-sec-title">Key risks</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Competitor demos may be concluding</strong> — Every day without action is a day the competition is advancing. The intervention window is closing.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>P1 failure + renewal conversation cannot coexist</strong> — Approaching James about renewal while Ticket #7743 is open would damage any remaining goodwill.</div></div></div><div class="brief-section"><div class="brief-sec-title">Discussion questions</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">What is engineering committed ETA for the P1 fix and is it being treated with appropriate urgency?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Who will lead the executive call with James Tran and what is the message?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Do we have competitive intelligence on the two solutions being evaluated?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Should we prepare an early renewal offer with a reliability SLA as the retention play?</div></div></div><div class="brief-section"><div class="brief-sec-title">Action items — assign before leaving</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Engineering P1 fix ETA — owner: Eng Lead, due: today</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Executive call with James Tran scheduled — owner: [Senior Exec], due: within 48 hours of fix</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Reliability narrative prepared — owner: AM + Solutions, due: before the call</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Competitive intelligence on two evaluated solutions — owner: AM, due: this week</div></div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">HubSpot Ticket #7743 · May 30 — P1 WMS integration failure, three distribution centers impacted, third incident this quarter</div><div class="src-cite">Email Summary · May 29 — James Tran renewal warning, competitor evaluation confirmed in writing</div></div>`,
+      callprep: `<div class="brief-section"><div class="brief-sec-title">Context for this call</div><div class="brief-p">This is a retention call. James Tran has confirmed competitor evaluation and issued what is essentially a reliability ultimatum. The P1 fix has shipped. Your job is to acknowledge the pattern directly, present a credible reliability story, and open the path to renewal. Do not lead with the renewal — lead with accountability.</div></div><div class="brief-section"><div class="brief-sec-title">Recommended talking order</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>1. Open with accountability</strong> — Start here, not with the fix. "James, I want to begin by acknowledging directly that the pattern of issues this quarter is not acceptable. I am personally committed to making sure this changes."</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>2. Walk through the fix</strong> — What caused the WMS failure, what was done, and — critically — what is being done differently to prevent a fourth incident. Maria Lopez should have confirmed resolution on her end before this call.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>3. Present the reliability commitment</strong> — Offer a formal SLA or written reliability commitment. Give James something concrete to take back to his leadership.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>4. Ask about the path to renewal</strong> — "What would it take to give you full confidence in renewing with us? I want to understand exactly what you need to see."</div></div></div><div class="brief-section"><div class="brief-sec-title">What to watch for</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Competitor demos already scheduled</strong> — Ask directly but professionally. If they are, you need to know the timeline.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Pressure from his own leadership</strong> — James may be under internal pressure to show he is acting on the reliability issues. Understanding this helps you frame the right solution.</div></div></div><div class="brief-section"><div class="brief-sec-title">Questions to ask — use these verbatim</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"Can you confirm on your end that shipment tracking is fully restored across all three distribution centers?"</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"What would full confidence in our reliability look like to you — time without incidents, a formal SLA, or something else?"</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"Are competitor evaluations still ongoing, or is there an opportunity to address your concerns before a decision is made?"</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"Is there anything outside the technical issues influencing the renewal decision that I should understand?"</div></div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">HubSpot Ticket #7743 · May 30 — P1 WMS integration failure, three distribution centers impacted, third incident this quarter</div><div class="src-cite">Email Summary · May 29 — James Tran renewal warning, competitor evaluation confirmed in writing</div></div>`,
+      executive: `<div class="brief-section"><div class="brief-sec-title">Bottom line</div><div class="brief-p">Northstar Logistics is at high risk of churning at Q3 renewal. The VP of Operations has formally confirmed competitor evaluation in writing following three technical incidents this quarter. An unresolved P1 WMS failure is compounding the situation. Without senior executive intervention in the next 48-72 hours, the probability of losing this account is significant.</div></div><div class="brief-section"><div class="brief-sec-title">What is happening</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>P1 WMS failure unresolved (Ticket #7743)</strong> — Three distribution centers impacted. Third incident this quarter. Trust severely damaged.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>James Tran confirmed competitor evaluation in writing</strong> — May 29 email stated they are evaluating two alternatives and will decide before Q3. Direct quote: "We need to see demonstrated reliability before committing to another year."</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>No executive response has been made</strong> — The email was received. No senior-level outreach has occurred. This silence is being noticed.</div></div></div><div class="brief-section"><div class="brief-sec-title">Business risk</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Churn risk is real and imminent</strong> — Competitor demos may be in progress now. The window for intervention is 48-72 hours after the P1 fix ships — not longer.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Revenue impact</strong> — Loss of this account at Q3 renewal represents a direct revenue impact that cannot be recovered in-quarter.</div></div></div><div class="brief-section"><div class="brief-sec-title">What needs to happen</div><div class="brief-p">Step one: confirm the P1 WMS fix is shipped and verified by Maria Lopez. Step two: a senior executive — not the AM — calls James Tran directly within 24 hours of the fix. The message must acknowledge the pattern, commit to reliability with specifics, and open the renewal conversation. An early renewal offer with a formal SLA should be prepared before the call. Do not delegate this to the account team.</div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">HubSpot Ticket #7743 · May 30 — P1 WMS integration failure, three distribution centers impacted, third incident this quarter</div><div class="src-cite">Email Summary · May 29 — James Tran renewal warning, competitor evaluation confirmed in writing</div></div>`
+    }
+  },
+  brightpath: {
+    name: 'BrightPath Software',
+    updatedLabel: 'Last updated May 27',
+    pending: [
+      { src: 'Meeting Notes', srcClass: 'src-m', time: 'May 31, 2026 · 2:00 PM',
+        short: 'Q2 QBR — CEO endorsed expansion to Finance, HR, Legal units by Q4. Budget pre-approved.',
+        full: 'MEETING NOTES — Q2 Quarterly Business Review\nDate: May 31, 2026 · 2:00–3:00 PM\nAttendees: Tom Richards (CEO), Sarah Kim (Head of Ops), Michael Reyes (AM), Dana Park (Solutions)\n\nKey Discussion Points:\n• Customer confirmed strong ROI from current deployment — cited 34% reduction in manual reporting time\n• Tom Richards (CEO) personally endorsed expansion to Finance, HR, and Legal business units\n• Target go-live: Q4 2026 for all three units\n• Budget has been pre-approved for all three expansions\n• Sarah Kim to lead internal rollout coordination\n\nNext Steps:\n• Our team to draft expansion proposal within one week\n• Kickoff call to be scheduled with Sarah Kim\n• Assess phased vs simultaneous rollout approach\n\nTone: Highly positive. CEO engagement is a strong signal. Move quickly while momentum is high.' },
+    ],
+    profile: { contacts: ['Sarah Kim','Tom Richards'], priorities: ['QBR Preparation (May 31)','Expansion Opportunity Exploration'], risks: ['No Critical Risks'], opps: ['Potential Multi-Unit Expansion','Strong ROI Platform for Upsell'], actions: ['Prepare QBR agenda and materials','Identify expansion opportunities to discuss','Review current deployment performance data'] },
+    profileNote: `BrightPath Software — Customer Profile
+Last updated: May 27, 2026
+
+ACCOUNT OVERVIEW
+BrightPath Software has been a customer since 2023. The relationship is strong with positive engagement. A quarterly business review is scheduled for May 31.
+
+KEY CONTACTS
+- Sarah Kim (Head of Operations) — Primary contact
+- Tom Richards (CEO) — Executive stakeholder
+
+CURRENT PRIORITIES
+- Upcoming QBR on May 31
+- Exploring expansion opportunities for additional business units
+- Maintaining strong deployment performance
+
+ACTIVE RISKS
+- No critical risks at this time
+
+OPPORTUNITIES
+- Potential expansion to additional business units pending QBR outcomes
+- Strong ROI from current deployment creates upsell opportunity
+
+RECENT ACTIVITY
+- May 27: Account reviewed — QBR scheduled for May 31
+- May 27: Customer engagement strong, expansion conversations ongoing`,
+    briefs: {
+      onboarding: `<div class="brief-section"><div class="brief-sec-title">Account overview</div><div class="brief-p">BrightPath Software has been a customer since 2023 and is the strongest growth account in the current portfolio. Following a CEO-attended QBR on May 31, the customer confirmed expansion to Finance, HR, and Legal business units by Q4 2026, with budgets pre-approved for all three. Your job is to move fast and close this deal — the only risk here is internal delay.</div></div><div class="brief-section"><div class="brief-sec-title">Who you are working with</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Tom Richards (CEO)</strong> — Personally attended the QBR and endorsed the expansion. This is rare. CEO involvement signals strong organizational commitment and gives you direct access to the highest level. Build a relationship with him as you proceed.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Sarah Kim (Head of Operations)</strong> — Primary day-to-day champion who is driving the expansion internally. She is your main coordination point for everything — proposal, kickoff, and implementation planning.</div></div></div><div class="brief-section"><div class="brief-sec-title">What happened and why it matters</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>QBR on May 31 went exceptionally well</strong> — Customer cited a 34% reduction in manual reporting time as proof of ROI. CEO was present and personally endorsed expansion to Finance, HR, and Legal units.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Budget pre-approved for all three units</strong> — The most common deal blocker is already cleared. This deal is ready to move the moment a proposal is agreed.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Q4 2026 target go-live for all three units</strong> — This is ambitious. A phased rollout approach should be assessed early to manage delivery risk.</div></div></div><div class="brief-section"><div class="brief-sec-title">What could go wrong</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Momentum loss from internal delay</strong> — CEO-endorsed deals move fast or they stall. If a proposal is not in Sarah hands within 7 days of the QBR, the energy dissipates and the deal slows.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Delivery capacity for three simultaneous Q4 rollouts</strong> — Assess whether the implementation team can handle Finance, HR, and Legal simultaneously, or whether a phased approach is needed.</div></div></div><div class="brief-section"><div class="brief-sec-title">Your first week priorities</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Schedule kickoff call with Sarah Kim within 48 hours — align on proposal structure and which unit to prioritize first</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Draft expansion proposal this week — cover all three units, include phased rollout as an option</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Assess internal Q4 delivery capacity for three simultaneous implementations</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Explore enterprise contract restructure opportunity with CEO — this is the right moment</div></div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">Meeting Notes · May 31 — QBR, CEO Tom Richards endorsed 3-unit expansion, pre-approved budgets for Finance, HR, Legal, 34% ROI cited</div></div>`,
+      meeting: `<div class="brief-section"><div class="brief-sec-title">Situation summary</div><div class="brief-p">BrightPath Software is our best near-term expansion opportunity. A CEO-attended QBR on May 31 resulted in confirmed expansion to three business units with pre-approved budgets. The deal is ready to close — but internal mobilization needs to happen today. If we do not have a proposal in the client hands within 7 days of the QBR, we lose the momentum that CEO attendance created.</div></div><div class="brief-section"><div class="brief-sec-title">Open issues requiring decisions today</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>No proposal owner assigned</strong> — June 7 is the 7-day mark from the QBR. Who is drafting this proposal and what is the internal delivery date?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Rollout approach undecided</strong> — Simultaneous vs phased Q4 rollout for Finance, HR, and Legal. A phased approach reduces delivery risk but may reduce urgency for the client. This decision needs to be made today.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Enterprise contract not yet explored</strong> — CEO involvement makes this the right moment for a restructure conversation. Has anyone prepared an analysis?</div></div></div><div class="brief-section"><div class="brief-sec-title">Key risks</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Momentum loss</strong> — The half-life of a CEO-endorsed QBR is short. Two weeks without a proposal and the deal begins to slow.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Q4 delivery capacity</strong> — Can the implementation team actually deliver three business unit rollouts simultaneously? If not, the phased option needs to be ready before the next client call.</div></div></div><div class="brief-section"><div class="brief-sec-title">Discussion questions</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Who is leading the expansion proposal and what is the target delivery date to Sarah Kim?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Simultaneous vs phased Q4 rollout — what are the tradeoffs and what do we recommend?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">What is Q4 implementation capacity and do we have resources committed for three units?</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Is this the right moment to introduce an enterprise contract discussion with Tom Richards?</div></div></div><div class="brief-section"><div class="brief-sec-title">Action items — assign before leaving</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Proposal owner and delivery date confirmed — owner: [assign], target: within 7 days of QBR</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Kickoff call with Sarah Kim scheduled — owner: AM, due: within 48 hours</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Q4 capacity assessment completed — owner: Implementation Lead, due: this week</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Enterprise contract analysis prepared — owner: [Commercial Lead], due: before next client call</div></div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">Meeting Notes · May 31 — QBR, CEO Tom Richards endorsed 3-unit expansion, pre-approved budgets for Finance, HR, Legal, 34% ROI cited</div></div>`,
+      callprep: `<div class="brief-section"><div class="brief-sec-title">Context for this call</div><div class="brief-p">This is a post-QBR alignment call with Sarah Kim. The CEO has already endorsed the deal and budgets are approved. Your job is to align on proposal structure, confirm the rollout approach, and set a kickoff timeline. The energy from the QBR is high — match it and keep it moving.</div></div><div class="brief-section"><div class="brief-sec-title">How to open the call</div><div class="brief-p">Start with appreciation and momentum. Reference the CEO attendance specifically — it signals you noticed and value the organizational commitment. Then move quickly into proposal structure so the call is productive, not just relationship-building.</div></div><div class="brief-section"><div class="brief-sec-title">What to cover — in this order</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>1. Proposal structure</strong> — Walk through how you plan to scope each unit. Ask Sarah which unit she wants to prioritize first and why. Her answer tells you the internal politics.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>2. Rollout approach</strong> — "We want to make sure we deliver at the quality you expect. We are considering a phased approach — Finance first in Q4, then HR and Legal in Q1. Does that work for your planning?"</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>3. Internal stakeholders</strong> — Ask who the key contacts in Finance, HR, and Legal are so you can start relationship-building in each unit before kickoff.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>4. Enterprise contract</strong> — Plant the idea: "Given the scale of what we are planning together, it might be worth a conversation about structuring this as an enterprise agreement. Would Tom be open to that?"</div></div></div><div class="brief-section"><div class="brief-sec-title">Risks to manage on this call</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Delivery capacity</strong> — Be honest about Q4 bandwidth if needed. A phased approach is better than overpromising.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Internal dependencies</strong> — Each unit will have its own stakeholders and processes. Identify them early to avoid surprises during implementation.</div></div></div><div class="brief-section"><div class="brief-sec-title">Questions to ask — use these verbatim</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"Which of the three units — Finance, HR, or Legal — would you prioritize for the first go-live, and what is driving that priority?"</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"Are there internal dependencies or unit-level stakeholders we should connect with early in the process?"</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"Would a phased rollout work for your planning, or is it important to have all three units live simultaneously in Q4?"</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">"Would Tom be open to exploring an enterprise-level agreement given the scale of what we are planning together?"</div></div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">Meeting Notes · May 31 — QBR, CEO Tom Richards endorsed 3-unit expansion, pre-approved budgets for Finance, HR, Legal, 34% ROI cited</div></div>`,
+      executive: `<div class="brief-section"><div class="brief-sec-title">Bottom line</div><div class="brief-p">BrightPath Software is the highest-momentum account in the current portfolio. A CEO-attended QBR on May 31 resulted in confirmed expansion to three business units with pre-approved budgets. This deal is ready to close. The only thing that can stop it is internal delay on our side.</div></div><div class="brief-section"><div class="brief-sec-title">What happened</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>CEO Tom Richards personally attended the QBR and endorsed 3-unit expansion</strong> — Finance, HR, and Legal units confirmed for Q4 2026. Customer cited 34% reduction in manual reporting time as ROI justification.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Budgets pre-approved for all three units</strong> — The deal blocker is cleared. We are waiting on ourselves, not the client.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Sarah Kim (Head of Operations) is the internal champion</strong> — Engaged, motivated, and ready to move. Proposal delivery within 7 days of QBR is the critical action.</div></div></div><div class="brief-section"><div class="brief-sec-title">Business opportunity</div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Three-unit expansion</strong> — Each unit represents a distinct, incremental revenue opportunity. All three have committed budgets and CEO endorsement.</div></div><div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text"><strong>Enterprise contract restructure</strong> — CEO-level engagement and three-unit expansion create the ideal conditions for a multi-year enterprise agreement. This conversation should happen now, not after the deal closes.</div></div></div><div class="brief-section"><div class="brief-sec-title">What needs to happen</div><div class="brief-p">Assign a proposal owner today with a delivery target within 7 days of the QBR. Have the AM schedule a kickoff call with Sarah Kim within 48 hours. Assess Q4 delivery capacity this week and prepare a phased rollout option. Begin the enterprise contract discussion with Tom Richards at the next available opportunity. This is our strongest near-term expansion account — it deserves full internal mobilization now.</div></div><div class="sources-bar"><div class="src-lbl">Sources used</div><div class="src-cite">Meeting Notes · May 31 — QBR, CEO Tom Richards endorsed 3-unit expansion, pre-approved budgets for Finance, HR, Legal, 34% ROI cited</div></div>`
+    }
+  }
+};
+
+// ─── STATE ─────────────────────────────────────────────────────────
+let currentCustomer = 'abc';
+let customerData = JSON.parse(JSON.stringify(CUSTOMERS)); // deep copy so we can mutate
+
+// ─── RENDER ────────────────────────────────────────────────────────
+function renderCustomer(key) {
+  const d = customerData[key];
+
+  // Sidebar signals — derived from data
+  ['abc','northstar','brightpath'].forEach(k => {
+    const cd = customerData[k];
+    const risks = cd.profile.risks.length;
+    const opps = cd.profile.opps.length;
+    const pending = cd.pending.length;
+    let html = '';
+    if (risks > 0) html += `<span class="sig sig-risk">&#9888; ${risks} risk${risks>1?'s':''}</span>`;
+    if (opps > 0) html += `<span class="sig sig-opp">&#8679; ${opps} opp${opps>1?'s':''}</span>`;
+    if (pending > 0) html += `<span class="sig sig-pending">&#9202; ${pending} pending</span>`;
+    document.getElementById('sig-'+k).innerHTML = html;
+  });
+
+  // Pending updates feed
+  const feed = document.getElementById('updates-feed');
+  feed.innerHTML = '';
+  d.pending.forEach(function(u, i) {
+    const div = document.createElement('div');
+    div.className = 'upd-card';
+    
+    const meta = document.createElement('div');
+    meta.className = 'upd-meta';
+    meta.innerHTML = '<span class="upd-src ' + u.srcClass + '">' + u.src + '</span><span class="upd-time">' + u.time + '</span>';
+    
+    const text = document.createElement('div');
+    text.className = 'upd-text';
+    text.textContent = u.short;
+    
+    const footer = document.createElement('div');
+    footer.className = 'upd-footer';
+    
+    const link = document.createElement('div');
+    link.className = 'view-link';
+    link.innerHTML = '&#128065; View full note';
+    link.addEventListener('click', function() { openUpdateModal(i); });
+    
+    footer.appendChild(link);
+    div.appendChild(meta);
+    div.appendChild(text);
+    div.appendChild(footer);
+    feed.appendChild(div);
+  });
+
+  // Pending count label + process button
+  const count = d.pending.length;
+  document.getElementById('pending-count-label').textContent = count + ' new \u00b7 May 31';
+  document.getElementById('process-btn').innerHTML = `&#129504; Process ${count} pending update${count!==1?'s':''}`;
+  document.getElementById('process-btn').style.display = count === 0 ? 'none' : 'flex';
+
+  // Profile snapshot
+  document.getElementById('snapshot-updated').textContent = d.updatedLabel;
+  document.getElementById('snap-contacts').innerHTML = d.profile.contacts.map(c=>`<span class="tag tag-c">${c}</span>`).join('');
+  document.getElementById('snap-priorities').innerHTML = d.profile.priorities.map(p=>`<span class="tag tag-p">${p}</span>`).join('');
+  document.getElementById('snap-risks').innerHTML = d.profile.risks.map(r=>`<span class="tag tag-r">${r}</span>`).join('');
+  document.getElementById('snap-opps').innerHTML = d.profile.opps.map(o=>`<span class="tag tag-o">${o}</span>`).join('');
+  document.getElementById('snap-actions').innerHTML = d.profile.actions.map(a=>`<div class="action-row"><span style="color:var(--accent);margin-right:4px">&#8594;</span>${a}</div>`).join('');
+
+  // Profile note textarea
+  // Profile note — rich HTML rendering
+  const sections = ['ACCOUNT OVERVIEW','KEY CONTACTS','CURRENT PRIORITIES','ACTIVE RISKS','OPPORTUNITIES','RECENT ACTIVITY','AI PROCESSED UPDATE'];
+  let html = d.profileNote.trim();
+  // Title + meta line
+  html = html.replace(/^(.+)\n(Last updated:.+)\n+/m, '<span class="account-title">$1</span><span class="meta-line">$2</span>');
+  // All section headers — consume surrounding newlines
+  sections.forEach(s => {
+    html = html.replace(new RegExp('\\n*'+s+'\\n*','g'), '<span class="section-header">'+s+'</span>');
+  });
+  // Single newlines → break
+  html = html.replace(/\n/g,'<br>');
+  // Strip any leading breaks
+  html = html.replace(/^(<br\s*\/?>\s*)+/,'');
+  document.getElementById('profileNote').innerHTML = html;
+  document.getElementById('profile-tab-title').textContent = 'Full customer profile — ' + d.name;
+  document.getElementById('saveHint').textContent = 'Edits here will be used when generating briefs';
+
+  // Brief output — default to onboarding
+  document.getElementById('briefBox').innerHTML = d.briefs ? d.briefs.onboarding : '';
+  document.getElementById('briefTypeLabel').textContent = 'New team member onboarding';
+  document.querySelectorAll('.brief-type').forEach((b,i) => b.classList.toggle('active', i===0));
+}
+
+function selectCustomer(key) {
+  currentCustomer = key;
+  document.querySelectorAll('.cust').forEach(c => c.classList.remove('active'));
+  document.getElementById('cust-'+key).classList.add('active');
+  showTab('dashboard');
+  renderCustomer(key);
+  showToast('Switched to ' + customerData[key].name);
+}
+
+// ─── TABS ──────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['dashboard','profile','brief'][i] === name);
+  });
+}
+
+// ─── UPDATES ───────────────────────────────────────────────────────
+function openUpdateModal(index) {
+  const u = customerData[currentCustomer].pending[index];
+  document.getElementById('updModalTitle').textContent = u.src + ' — ' + u.time;
+
+  const full = u.full || u.short;
+  const lines = full.split('\n');
+  let html = '';
+  let inSection = false;
+
+  lines.forEach(function(line) {
+    const t = line.trim();
+    if (!t) { if (inSection) html += '<div style="height:8px"></div>'; return; }
+
+    // ALL CAPS line = section header
+    if (t === t.toUpperCase() && t.length > 3 && !t.startsWith('•') && !t.startsWith('-')) {
+      html += '<div class="note-section-title">' + t + '</div>';
+      inSection = true;
+    }
+    // Bullet point
+    else if (t.startsWith('•') || t.startsWith('-')) {
+      const text = t.replace(/^[•\-]\s*/, '');
+      // Quoted content (starts and ends with quotes)
+      if (text.startsWith('"') && text.endsWith('"')) {
+        html += '<div class="note-quote">' + text + '</div>';
+      } else {
+        html += '<div class="note-bullet"><div class="note-bullet-dot"></div>' + text + '</div>';
+      }
+    }
+    // Key: Value line
+    else if (t.includes(': ') && t.indexOf(': ') < 25) {
+      const colonIdx = t.indexOf(': ');
+      const key = t.substring(0, colonIdx);
+      const val = t.substring(colonIdx + 2);
+      html += '<div class="note-line"><span style="font-weight:600;color:var(--muted)">' + key + ':</span> ' + val + '</div>';
+    }
+    // Regular line
+    else {
+      html += '<div class="note-line">' + t + '</div>';
+    }
+  });
+
+  document.getElementById('updModalBody').innerHTML = html;
+  document.getElementById('updModalTime').textContent = u.src + ' · ' + u.time;
+  openModal('upd-modal');
+}
+
+function submitUpdate() {
+  const type = document.getElementById('newUpdType').value;
+  const contentVal = document.getElementById('newUpdContent').value.trim();
+  if (!contentVal) { showToast('Please enter update content'); return; }
+
+  const srcClassMap = { 'Account Manager Update':'src-am', 'Meeting Notes':'src-m', 'Email Summary':'src-e' };
+  const today = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+  customerData[currentCustomer].pending.push({
+    src: type, srcClass: srcClassMap[type] || 'src-am',
+    time: today, short: contentVal.slice(0,120)+(contentVal.length>120?'...':''), full: contentVal,
+    userAdded: true
+  });
+
+  document.getElementById('newUpdContent').value = '';
+  closeModal('add-upd-modal');
+  renderCustomer(currentCustomer);
+  showToast('Update added to pending feed');
+}
+
+// ─── PROCESS UPDATES ───────────────────────────────────────────────
+function getApiKey() {
+  return document.getElementById('apiKeyInput').value.trim() || 'demo';
+}
+
+function simulateThinking(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ─── SUMMARIZATION ENGINE ──────────────────────────────────────────
+// Handles any length, style, or content of account manager update
+// and produces clean professional summaries for profile and tags
+
+function extractSentences(text) {
+  return text.trim()
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+/)
+    .map(function(s) { return s.trim(); })
+    .filter(function(s) { return s.length > 10; });
+}
+
+function extractKeyPhrase(text) {
+  const t = text.trim().replace(/\s+/g, ' ');
+  const sentences = extractSentences(t);
+  const first = sentences[0] || t;
+  const fillers = [
+    /^(The client|The customer|They|We|I|The account)\s+(is|are|was|were|have|has|had)\s+/i,
+    /^(Just wanted to note that|Please note that|FYI[,\s]+|Note[:\s]+)/i,
+    /^(Following up[,\s]+|As discussed[,\s]+|Per our conversation[,\s]+)/i
+  ];
+  let clean = first;
+  fillers.forEach(function(f) { clean = clean.replace(f, ''); });
+  clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+  clean = clean.replace(/[,;]$/, '').trim();
+  if (clean.length > 0 && !clean.match(/[.!?]$/)) clean += '.';
+  return clean;
+}
+
+function synthesizeSentences(sentences) {
+  // Find the core subject — what is the main topic?
+  const allText = sentences.join(' ').toLowerCase();
+
+  // Find repeated key nouns/topics across sentences
+  const words = allText.match(/\b[a-z]{4,}\b/g) || [];
+  const freq = {};
+  words.forEach(function(w) {
+    const stopWords = ['that','this','they','their','also','have','with','from','will','been','were','about','would','could','should','interested','client','customer'];
+    if (!stopWords.includes(w)) freq[w] = (freq[w] || 0) + 1;
+  });
+
+  // Find words that appear in multiple sentences (the real topic)
+  const keyTopics = Object.keys(freq).filter(function(w) { return freq[w] > 1; }).slice(0, 3);
+
+  // Build synthesis: take first sentence, augment with unique info from others
+  let base = sentences[0];
+
+  // Strip filler from base
+  base = base.replace(/^(The client|The customer|They)\s+(is|are|was|were)\s+/i, '');
+  base = base.charAt(0).toUpperCase() + base.slice(1).replace(/\.$/, '');
+
+  // Find unique additions from remaining sentences
+  const additions = [];
+  for (let i = 1; i < sentences.length; i++) {
+    const s = sentences[i].toLowerCase();
+    // Only add if it contains a topic keyword not already in base
+    const baseWords = base.toLowerCase();
+    const hasNew = keyTopics.some(function(t) { return s.includes(t) && !baseWords.includes(t); }) ||
+      s.includes('all future') || s.includes('every') || s.includes('additionally') ||
+      s.includes('also wants') || s.includes('also interested') || s.includes('in addition');
+    if (hasNew) {
+      // Extract the key clause
+      let addition = sentences[i]
+        .replace(/^(They are also|They also|The client also|The customer also|Additionally)[,\s]*/i, '')
+        .replace(/^(interested in |looking to |hoping to )/i, '')
+        .replace(/\.$/, '');
+      addition = addition.charAt(0).toLowerCase() + addition.slice(1);
+      additions.push(addition);
+    }
+  }
+
+  if (additions.length > 0) {
+    return base + ', including ' + additions.join(' and ') + '.';
+  }
+  return base + '.';
+}
+
+function summarizeForProfile(text, src) {
+  const t = text.trim().replace(/\s+/g, ' ');
+  if (t.length <= 80) return t.replace(/[.!?]$/, '') + '.';
+  const sentences = extractSentences(t);
+  if (sentences.length === 1) {
+    if (t.length <= 130) return t;
+    const cut = t.substring(0, 120);
+    return cut.substring(0, cut.lastIndexOf(' ')) + '.';
+  }
+  // Multiple sentences — synthesize
+  const synthesized = synthesizeSentences(sentences);
+  if (synthesized.length <= 150) return synthesized;
+  const cut = synthesized.substring(0, 140);
+  return cut.substring(0, cut.lastIndexOf(' ')) + '.';
+}
+
+function summarizeForTag(text) {
+  const t = text.trim().replace(/\s+/g, ' ');
+  const sentences = extractSentences(t);
+
+  // Find the core topic keywords
+  const allText = t.toLowerCase();
+  // Common business topics to detect
+  const topics = [
+    { key: 'uat', label: 'UAT participation' },
+    { key: 'demo', label: 'Demo request' },
+    { key: 'training', label: 'Training request' },
+    { key: 'integration', label: 'Integration interest' },
+    { key: 'expand', label: 'Expansion interest' },
+    { key: 'renew', label: 'Renewal discussion' },
+    { key: 'budget', label: 'Budget concern' },
+    { key: 'timeline', label: 'Timeline concern' },
+    { key: 'contract', label: 'Contract discussion' },
+    { key: 'onboard', label: 'Onboarding request' },
+    { key: 'feedback', label: 'Customer feedback' },
+    { key: 'escalat', label: 'Issue escalation' },
+    { key: 'proposal', label: 'Proposal request' },
+    { key: 'pricing', label: 'Pricing inquiry' },
+    { key: 'support', label: 'Support request' },
+    { key: 'meet', label: 'Meeting request' },
+    { key: 'call', label: 'Call request' },
+  ];
+
+  for (let i = 0; i < topics.length; i++) {
+    if (allText.includes(topics[i].key)) return topics[i].label;
+  }
+
+  // Fallback: extract key phrase from first sentence
+  const phrase = extractKeyPhrase(t);
+  if (phrase.length <= 40) return phrase.replace(/\.$/, '');
+  const cut = phrase.substring(0, 38);
+  return cut.substring(0, cut.lastIndexOf(' '));
+}
+
+function categorizeUpdate(text) {
+  // Returns array of categories: 'action', 'risk', 'opp', 'priority'
+  const lower = text.toLowerCase();
+  const cats = [];
+  const actionWords = ['interest', 'request', 'want', 'would like', 'asking', 'need', 'follow up', 'reach out', 'schedule', 'confirm', 'uat', 'review', 'meet'];
+  const riskWords = ['risk', 'concern', 'issue', 'problem', 'delay', 'blocked', 'escalat', 'unhappy', 'frustrated', 'leaving', 'departure', 'churn', 'cancel', 'competi'];
+  const oppWords = ['opportunit', 'expand', 'upsell', 'growth', 'new project', 'additional', 'interest in', 'looking to add', 'upgrade'];
+  const priorityWords = ['deadline', 'by end of', 'this week', 'urgent', 'asap', 'upcoming', 'next meeting', 'session', 'due date', 'before'];
+  if (actionWords.some(function(w){ return lower.includes(w); })) cats.push('action');
+  if (riskWords.some(function(w){ return lower.includes(w); })) cats.push('risk');
+  if (oppWords.some(function(w){ return lower.includes(w); })) cats.push('opp');
+  if (priorityWords.some(function(w){ return lower.includes(w); })) cats.push('priority');
+  if (cats.length === 0) cats.push('action'); // default
+  return cats;
+}
+// ─── END SUMMARIZATION ENGINE ───────────────────────────────────────
+
+
+function rebuildBriefFromProfile(type, d) {
+  // Rebuild brief sections from current live profile state
+  // Used after updates have been processed to ensure brief reflects latest info
+
+  // Build contacts section
+  const contactsHTML = d.profile.contacts.map(function(c) {
+    return '<div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">' + c + '</div></div>';
+  }).join('');
+
+  // Build risks section
+  const risksHTML = d.profile.risks.map(function(r) {
+    return '<div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">' + r + '</div></div>';
+  }).join('');
+
+  // Build opportunities section
+  const oppsHTML = d.profile.opps.map(function(o) {
+    return '<div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">' + o + '</div></div>';
+  }).join('');
+
+  // Build actions section
+  const actionsHTML = d.profile.actions.map(function(a) {
+    return '<div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">' + a + '</div></div>';
+  }).join('');
+
+  // Build priorities section
+  const prioritiesHTML = d.profile.priorities.map(function(p) {
+    return '<div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">' + p + '</div></div>';
+  }).join('');
+
+  // Sources section - extract from existing brief
+  const existing = d.briefs[type] || '';
+  let sourcesHTML = '';
+  if (existing.includes('sources-bar')) {
+    const srcStart = existing.indexOf('<div class="sources-bar">');
+    const srcEnd = existing.lastIndexOf('</div>') + 6;
+    sourcesHTML = srcStart > -1 ? existing.substring(srcStart, srcEnd) : '';
+  }
+
+  // Build type-specific brief
+  if (type === 'onboarding') {
+    return '<div class="brief-section"><div class="brief-sec-title">Account overview</div><div class="brief-p">' + d.name + ' — profile last updated ' + d.updatedLabel + '. Review all sections below before engaging with this account.</div></div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Key contacts</div>' + contactsHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Current priorities</div>' + prioritiesHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Risks</div>' + risksHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Opportunities</div>' + oppsHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Recommended first actions</div>' + actionsHTML + '</div>' + sourcesHTML;
+  }
+  if (type === 'meeting') {
+    return '<div class="brief-section"><div class="brief-sec-title">Recent developments</div>' + prioritiesHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Risks</div>' + risksHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Opportunities</div>' + oppsHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Discussion questions</div>' +
+        '<div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">What is the current status of each priority item?</div></div>' +
+        '<div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">Which risks require immediate escalation?</div></div>' +
+        '<div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">What decisions need to be made today?</div></div>' +
+      '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Action items</div>' + actionsHTML + '</div>' + sourcesHTML;
+  }
+  if (type === 'callprep') {
+    return '<div class="brief-section"><div class="brief-sec-title">Latest updates</div>' + prioritiesHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Talking points</div>' + oppsHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Risks to address</div>' + risksHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Suggested questions</div>' +
+        d.profile.actions.slice(0,3).map(function(a) {
+          return '<div class="brief-bullet"><div class="brief-bullet-dot"></div><div class="brief-bullet-text">' + a + '</div></div>';
+        }).join('') +
+      '</div>' + sourcesHTML;
+  }
+  if (type === 'executive') {
+    return '<div class="brief-section"><div class="brief-sec-title">Relationship status</div>' +
+        '<div class="brief-p">Profile updated ' + d.updatedLabel + '. ' + d.profile.risks.length + ' active risk' + (d.profile.risks.length !== 1 ? 's' : '') + ', ' + d.profile.opps.length + ' opportunit' + (d.profile.opps.length !== 1 ? 'ies' : 'y') + ' identified.</div>' +
+      '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Key developments</div>' + prioritiesHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Top risks</div>' + risksHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Top opportunities</div>' + oppsHTML + '</div>' +
+      '<div class="brief-section"><div class="brief-sec-title">Recommended next step</div>' +
+        '<div class="brief-p">' + (d.profile.actions[0] || 'Review account and align on next steps.') + '</div>' +
+      '</div>' + sourcesHTML;
+  }
+  return existing;
+}
+
+function rebuildBriefWithUpdate(type, summary, cust) {
+  const existing = cust.briefs[type];
+  if (!existing) return existing;
+  // Inject the new update into the sources section
+  const sourceEntry = '<div class="src-cite">AM Update · ' + new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + ' — ' + summarizeForTag(summary) + '</div>';
+  if (existing.includes('<div class="sources-bar">')) {
+    return existing.replace('<div class="src-lbl">Sources used</div>', '<div class="src-lbl">Sources used</div>' + sourceEntry);
+  }
+  return existing;
+}
+
+async function processUpdates() {
+  const count = customerData[currentCustomer].pending.length;
+  if (count === 0) { showToast('No pending updates to process'); return; }
+
+  const d = customerData[currentCustomer];
+  document.getElementById('process-btn').innerHTML = '&#9203; Agent processing...';
+  document.getElementById('process-btn').disabled = true;
+  showToast('Agent reading ' + count + ' update' + (count > 1 ? 's' : '') + '...');
+
+  setTimeout(function() { showToast('Extracting key information...'); }, 1000);
+  setTimeout(function() { showToast('Updating customer profile...'); }, 2000);
+
+  // Capture any user-added updates before clearing
+  const userAddedUpdates = d.pending.filter(function(u) { return u.userAdded; });
+
+  setTimeout(function() {
+    const simulated = {
+      abc: {
+        contacts: ['Emily Chen (transitioning)', 'David Smith (incoming primary)'],
+        priorities: ['Oncology Expansion Q3', 'Budget Approval', 'Implementation Timeline'],
+        risks: ['Budget Delay 4-6 weeks', 'Stakeholder Transition Risk', 'Implementation Slip'],
+        opps: ['Q3 Oncology Expansion', 'New Stakeholder Access', 'June 15 Proposal Window'],
+        actions: ['Confirm budget approval timeline on next call', 'Identify replacement for Emily Chen immediately', 'Deliver revised implementation plan this week', 'Submit oncology expansion proposal before June 15'],
+        profileNote: 'ABC Healthcare — Customer Profile' +
+        "\n" + 'Last updated: June 1, 2026' +
+        "\n" + '' +
+        "\n" + 'ACCOUNT OVERVIEW' +
+        "\n" + 'ABC Healthcare has been a customer since 2022. Active relationship with ongoing oncology expansion discussions for Q3 2026. Budget approval is pending (est. 4-6 week delay) and a key stakeholder transition is expected as Emily Chen may depart next month.' +
+        "\n" + '' +
+        "\n" + 'KEY CONTACTS' +
+        "\n" + '- Emily Chen (Primary stakeholder) — transitioning, potential departure next month' +
+        "\n" + '- David Smith (Secondary, implementation lead) — confirmed as incoming primary contact' +
+        "\n" + '' +
+        "\n" + 'CURRENT PRIORITIES' +
+        "\n" + '- Oncology expansion project scoping and proposal (due June 15)' +
+        "\n" + '- Budget approval from finance team (delayed 4-6 weeks by procurement)' +
+        "\n" + '- Revised implementation timeline delivery this week' +
+        "\n" + '' +
+        "\n" + 'ACTIVE RISKS' +
+        "\n" + '- Budget approval delayed by internal procurement process (est. 4-6 weeks)' +
+        "\n" + '- Stakeholder transition risk — Emily Chen may depart before handoff is complete' +
+        "\n" + '- Implementation timeline slip if budget delays compound' +
+        "\n" + '' +
+        "\n" + 'OPPORTUNITIES' +
+        "\n" + '- Q3 oncology expansion — significant upsell potential, proposal due June 15' +
+        "\n" + '- New stakeholder engagement could open additional decision-maker relationships' +
+        "\n" + '- Budget approval window before June 15 deadline' +
+        "\n" + '' +
+        "\n" + 'RECENT ACTIVITY' +
+        "\n" + '- May 31: Meeting held — oncology expansion discussed, budget deferred to next call' +
+        "\n" + '- May 31: HubSpot ticket opened requesting revised implementation timeline' +
+        "\n" + '- May 31: AM flagged Emily Chen potential departure next month' +
+        "\n" + '- May 31: Implementation delay confirmed — 4-6 weeks due to procurement '
+      },
+      northstar: {
+        contacts: ['James Tran (VP Ops - skeptical, renewal decision maker)', 'Maria Lopez (IT Lead)'],
+        priorities: ['P1 WMS Integration Fix', 'Executive Relationship Repair', 'Contract Renewal Q3'],
+        risks: ['Active Competitor Evaluation (2 solutions)', 'P1 Integration Failure Unresolved', 'Trust Deficit - 3 incidents this quarter'],
+        opps: ['Fast Resolution Could Reset Relationship', 'Early Renewal Before Competitor Demos'],
+        actions: ['Get P1 WMS fix confirmed shipped today', 'Schedule executive call with James Tran this week', 'Prepare competitive positioning brief before renewal conversation', 'Do not contact customer until fix is shipped'],
+        profileNote: 'Northstar Logistics — Customer Profile' +
+        "\n" + 'Last updated: June 1, 2026' +
+        "\n" + '' +
+        "\n" + 'ACCOUNT OVERVIEW' +
+        "\n" + 'Northstar Logistics has been a customer since 2021. The relationship is under significant pressure following three technical incidents this quarter. Contract renewal is approaching in Q3 and the customer is actively evaluating two competitor solutions.' +
+        "\n" + '' +
+        "\n" + 'KEY CONTACTS' +
+        "\n" + '- James Tran (VP Operations) — renewal decision maker, currently skeptical, confirmed competitor evaluation in writing' +
+        "\n" + '- Maria Lopez (IT Lead) — managing P1 integration issue day-to-day' +
+        "\n" + '' +
+        "\n" + 'CURRENT PRIORITIES' +
+        "\n" + '- Resolve P1 WMS integration failure immediately' +
+        "\n" + '- Stabilize platform reliability before any renewal conversation' +
+        "\n" + '- Contract renewal decision expected Q3 2026' +
+        "\n" + '' +
+        "\n" + 'ACTIVE RISKS' +
+        "\n" + '- Customer evaluating 2 competitor solutions — confirmed in writing by VP' +
+        "\n" + '- P1 WMS integration failure unresolved as of May 30' +
+        "\n" + '- Three technical incidents this quarter — trust severely damaged' +
+        "\n" + '- Contract renewal at risk if issues persist' +
+        "\n" + '' +
+        "\n" + 'OPPORTUNITIES' +
+        "\n" + '- Resolving integration quickly could reset the relationship before competitor demos' +
+        "\n" + '- Early executive engagement could lock in renewal before decision is made' +
+        "\n" + '' +
+        "\n" + 'RECENT ACTIVITY' +
+        "\n" + '- May 30: P1 support ticket opened for WMS integration failure' +
+        "\n" + '- May 29: VP Operations email confirmed renewal concerns and competitor evaluation' +
+        "\n" + '- Q1-Q2: Three technical incidents this quarter damaging customer trust '
+      },
+      brightpath: {
+        contacts: ['Sarah Kim (Head of Ops - primary champion)', 'Tom Richards (CEO - executive sponsor)'],
+        priorities: ['Finance Unit Expansion', 'HR Unit Expansion', 'Legal Unit Expansion', 'Q4 Rollout Planning'],
+        risks: ['Momentum Loss if Proposal Delayed', 'Q4 Capacity - 3 Simultaneous Rollouts'],
+        opps: ['Finance Expansion (Budget Pre-Approved)', 'HR Expansion (Budget Pre-Approved)', 'Legal Expansion (Budget Pre-Approved)', 'Enterprise Contract Restructure'],
+        actions: ['Draft expansion proposal this week while momentum is high', 'Schedule kickoff call with Sarah Kim within 48 hours', 'Assess phased vs simultaneous Q4 rollout approach', 'Explore enterprise contract restructure given CEO involvement'],
+        profileNote: 'BrightPath Software — Customer Profile' +
+        "\n" + 'Last updated: June 1, 2026' +
+        "\n" + '' +
+        "\n" + 'ACCOUNT OVERVIEW' +
+        "\n" + 'BrightPath Software has been a customer since 2023. The relationship is strong and expanding rapidly. Following a highly successful QBR with CEO attendance, the customer confirmed expansion to Finance, HR, and Legal business units by Q4 2026. Budget is pre-approved for all three units.' +
+        "\n" + '' +
+        "\n" + 'KEY CONTACTS' +
+        "\n" + '- Sarah Kim (Head of Operations) — primary champion, driving expansion internally, highly engaged' +
+        "\n" + '- Tom Richards (CEO) — executive sponsor, personally endorsed expansion at QBR' +
+        "\n" + '' +
+        "\n" + 'CURRENT PRIORITIES' +
+        "\n" + '- Expansion proposal for Finance, HR, and Legal units (draft this week)' +
+        "\n" + '- Q4 implementation timeline and resource planning' +
+        "\n" + '- Maintaining momentum post-QBR' +
+        "\n" + '' +
+        "\n" + 'ACTIVE RISKS' +
+        "\n" + '- Momentum loss if proposal is delayed — act while CEO endorsement is fresh' +
+        "\n" + '- Capacity planning — 3 simultaneous Q4 rollouts is ambitious' +
+        "\n" + '' +
+        "\n" + 'OPPORTUNITIES' +
+        "\n" + '- Finance unit expansion — pre-approved budget, ready to kick off' +
+        "\n" + '- HR unit expansion — pre-approved budget' +
+        "\n" + '- Legal unit expansion — pre-approved budget' +
+        "\n" + '- CEO engagement opens path to enterprise-wide contract restructure' +
+        "\n" + '' +
+        "\n" + 'RECENT ACTIVITY' +
+        "\n" + '- May 31: QBR completed — CEO present, expansion to 3 units confirmed' +
+        "\n" + '- May 31: Budget pre-approved for all 3 expansion units' +
+        "\n" + '- May 31: CEO personally endorsed expansion roadmap '
+      }
+    };
+
+    const s = simulated[currentCustomer];
+    if (s) {
+      customerData[currentCustomer].pending = [];
+      customerData[currentCustomer].updatedLabel = 'Just now';
+      customerData[currentCustomer]._profileProcessed = true;
+      customerData[currentCustomer]._processedBriefs = {};
+      customerData[currentCustomer].profile.contacts = s.contacts;
+      customerData[currentCustomer].profile.priorities = s.priorities;
+      customerData[currentCustomer].profile.risks = s.risks;
+      customerData[currentCustomer].profile.opps = s.opps;
+      customerData[currentCustomer].profile.actions = s.actions;
+      customerData[currentCustomer].profileNote = s.profileNote;
+    }
+
+    // Process user-added updates — summarize and integrate into correct profile sections
+    if (userAddedUpdates.length > 0) {
+      const today = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      userAddedUpdates.forEach(function(u) {
+        const full = u.full || u.short;
+        const cust = customerData[currentCustomer];
+
+        // Summarize using the engine
+        const profileSummary = summarizeForProfile(full, u.src);
+        const tagLabel = summarizeForTag(full);
+        const categories = categorizeUpdate(full);
+
+        // Add clean summary to RECENT ACTIVITY in profile note
+        cust.profileNote = cust.profileNote + '\n- ' + today + ': ' + profileSummary;
+
+        // Route to correct snapshot sections
+        if (categories.includes('action')) {
+          cust.profile.actions.push('Follow up: ' + tagLabel);
+        }
+        if (categories.includes('risk')) {
+          cust.profile.risks.push(tagLabel);
+        }
+        if (categories.includes('opp')) {
+          cust.profile.opps.push(tagLabel);
+        }
+        if (categories.includes('priority')) {
+          cust.profile.priorities.push(tagLabel);
+        }
+
+        // Update cached briefs to include new source citation
+        const briefTypes = ['onboarding','meeting','callprep','executive'];
+        briefTypes.forEach(function(type) {
+          cust.briefs[type] = rebuildBriefWithUpdate(type, profileSummary, cust);
+        });
+      });
+    }
+
+    // Pre-build all 4 brief types and cache them
+    customerData[currentCustomer]._processedBriefs = {};
+    ['onboarding','meeting','callprep','executive'].forEach(function(t) {
+      customerData[currentCustomer]._processedBriefs[t] = rebuildBriefFromProfile(t, customerData[currentCustomer]);
+    });
+
+    renderCustomer(currentCustomer);
+    document.getElementById('process-btn').disabled = false;
+    showTab('profile');
+    showToast('Profile updated — ' + count + ' update' + (count > 1 ? 's' : '') + ' processed');
+  }, 3000);
+}
+
+async function selectBrief(el, type) {
+  document.querySelectorAll('.brief-type').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+  const labels = { onboarding:'New team member onboarding', meeting:'Internal team meeting', callprep:'Customer call prep', executive:'Executive summary' };
+  const label = labels[type];
+  document.getElementById('briefTypeLabel').textContent = label;
+
+  const briefBox = document.getElementById('briefBox');
+  briefBox.innerHTML = '<div style="color:#9CA3AF;font-size:13px;padding:20px 0">&#9203; Generating ' + label + '...</div>';
+  showToast('Generating brief...');
+
+  await simulateThinking(1500);
+
+  const d = customerData[currentCustomer];
+  const brief = d.briefs[type] || '';
+  briefBox.innerHTML = brief || '<div style="color:#9CA3AF;font-size:13px">No brief available.</div>';
+  showToast('Brief generated');
+}
+
+function saveProfile() {
+  customerData[currentCustomer].profileNote = document.getElementById('profileNote').innerText;
+  document.getElementById('saveHint').textContent = 'Saved — briefs will use this version';
+  showToast('Profile saved');
+}
+
+// ─── EXPORT ────────────────────────────────────────────────────────
+function copyBrief() {
+  const text = document.getElementById('briefBox').innerText;
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100px;opacity:.01;z-index:9999';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  let success = false;
+  try { success = document.execCommand('copy'); } catch(e){}
+  document.body.removeChild(ta);
+  showToast(success ? 'Brief copied to clipboard' : 'Select all text in brief and press Cmd+C');
+}
+
+function exportPDF() {
+  const customerName = customerData[currentCustomer].name;
+  const briefLabel = document.getElementById('briefTypeLabel').textContent;
+  const date = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const briefHTML = document.getElementById('briefBox').innerHTML;
+  const html = [
+    '<!DOCTYPE html><html><head><meta charset="UTF-8">',
+    '<title>' + briefLabel + ' - ' + customerName + '</title>',
+    '<style>',
+    'body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:13px;line-height:1.8;color:#1A1A2E;max-width:680px;margin:40px auto;padding:0 24px}',
+    '.hd{margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid #E0E6ED}',
+    '.hd-name{font-size:18px;font-weight:700;color:#0F1B2D;margin-bottom:3px}',
+    '.hd-type{font-size:13px;font-weight:600;color:#2E86DE;margin-bottom:3px}',
+    '.hd-date{font-size:11px;color:#9CA3AF}',
+    '.brief-section{margin-bottom:18px}',
+    '.brief-sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#0F1B2D;margin-bottom:8px;display:block}',
+    '.brief-p{font-size:13px;line-height:1.8;margin-bottom:6px}',
+    '.brief-bullet{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.6;margin-bottom:5px}',
+    '.brief-bullet-dot{width:6px;height:6px;min-width:6px;border-radius:50%;background:#2E86DE;margin-top:5px;flex-shrink:0}',
+    '.sources-bar{border-top:1px solid #E0E6ED;padding-top:10px;margin-top:12px}',
+    '.src-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9CA3AF;margin-bottom:5px;display:block}',
+    '.src-cite{font-size:11px;color:#6B7280;margin-bottom:3px;padding-left:10px;display:block}',
+    '@media print{body{margin:20px}}',
+    '</style></head><body>',
+    '<div class="hd">',
+    '<div class="hd-name">' + customerName + '</div>',
+    '<div class="hd-type">' + briefLabel + '</div>',
+    '<div class="hd-date">Generated by AccountIQ · ' + date + '</div>',
+    '</div>',
+    briefHTML,
+    '<script>window.onload=function(){window.print();}<\/script>',
+    '</body></html>'
+  ].join('');
+
+  const blob = new Blob([html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = customerName.replace(/[^a-zA-Z0-9]/g, '-') + '-Brief.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  showToast('Brief downloaded — open to print as PDF');
+}
+
+function openEmail() {
+  const customerName = customerData[currentCustomer].name;
+  const briefLabel = document.getElementById('briefTypeLabel').textContent;
+  const subject = encodeURIComponent('Account Brief — ' + customerName + ' — ' + briefLabel);
+
+  const HEADERS = ['ACCOUNT OVERVIEW','KEY CONTACTS','ACCOUNT HISTORY','CURRENT PRIORITIES',
+    'RISKS','OPPORTUNITIES','RECOMMENDED FIRST ACTIONS','RECENT DEVELOPMENTS','OPEN ISSUES',
+    'DISCUSSION QUESTIONS','ACTION ITEMS','LATEST UPDATES','TALKING POINTS',
+    'RISKS TO ADDRESS','OPPORTUNITIES TO DISCUSS','SUGGESTED QUESTIONS',
+    'RELATIONSHIP STATUS','KEY DEVELOPMENTS','TOP RISKS','TOP OPPORTUNITIES',
+    'RECOMMENDED NEXT STEP','WATCH CLOSELY','SOURCES USED'];
+
+  const raw = document.getElementById('briefBox').innerText;
+  const lines = raw.split('\n');
+  let body = customerName + ' — ' + briefLabel + '\n';
+  body += new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) + '\n';
+  body += '________________________________\n';
+
+  lines.forEach(function(line) {
+    const t = line.trim();
+    if (!t) return;
+    const isHeader = HEADERS.some(function(h){ return t.toUpperCase() === h; });
+    if (isHeader) {
+      body += '\n' + t + '\n';
+    } else {
+      body += '  ' + t + '\n';
+    }
+  });
+
+  // Try mailto first
+  try {
+    const a = document.createElement('a');
+    a.href = 'mailto:?subject=' + subject + '&body=' + encodeURIComponent(body);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('Opening mail client');
+  } catch(e) {
+    // Fallback: show in modal
+    document.getElementById('updModalTitle').textContent = 'Email Draft — ' + customerName;
+    document.getElementById('updModalBody').innerHTML = '<pre style="white-space:pre-wrap;font-size:12px;line-height:1.6">' + body.replace(/</g,'&lt;') + '</pre>';
+    document.getElementById('updModalTime').textContent = 'Copy and paste into your email client';
+    openModal('upd-modal');
+  }
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModalOutside(e, id) { if(e.target === document.getElementById(id)) closeModal(id); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────
+renderCustomer('abc');
+</script>
+</body>
+</html>
