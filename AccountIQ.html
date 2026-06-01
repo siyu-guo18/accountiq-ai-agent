@@ -705,7 +705,7 @@ async function callClaude(apiKey, system, userMsg) {
     body: JSON.stringify({
       system_instruction: { parts: [{ text: system }] },
       contents: [{ role: 'user', parts: [{ text: userMsg }] }],
-      generationConfig: { maxOutputTokens: 1000, temperature: 0.3 }
+      generationConfig: { maxOutputTokens: 2048, temperature: 0.3 }
     })
   });
   const data = await response.json();
@@ -751,13 +751,19 @@ async function processUpdates() {
     const parsed = JSON.parse(clean);
 
     customerData[currentCustomer].pending = [];
-    customerData[currentCustomer].updatedLabel = parsed.updatedLabel || 'Just now';
-    customerData[currentCustomer].profileNote = parsed.profileNote || d.profileNote;
-    customerData[currentCustomer].profile.contacts = parsed.contacts || d.profile.contacts;
-    customerData[currentCustomer].profile.priorities = parsed.priorities || d.profile.priorities;
-    customerData[currentCustomer].profile.risks = parsed.risks || d.profile.risks;
-    customerData[currentCustomer].profile.opps = parsed.opps || d.profile.opps;
-    customerData[currentCustomer].profile.actions = parsed.actions || d.profile.actions;
+    customerData[currentCustomer].updatedLabel = 'Just now';
+    if (parsed.contacts) customerData[currentCustomer].profile.contacts = parsed.contacts;
+    if (parsed.priorities) customerData[currentCustomer].profile.priorities = parsed.priorities;
+    if (parsed.risks) customerData[currentCustomer].profile.risks = parsed.risks;
+    if (parsed.opps) customerData[currentCustomer].profile.opps = parsed.opps;
+    if (parsed.actions) customerData[currentCustomer].profile.actions = parsed.actions;
+    if (parsed.summary) {
+      customerData[currentCustomer].profileNote = customerData[currentCustomer].profileNote
+        + '
+
+AI UPDATE — Just now
+' + parsed.summary;
+    }
 
     renderCustomer(currentCustomer);
     showTab('profile');
