@@ -10,15 +10,18 @@ Customer information is fragmented across meeting notes, CRM tickets, emails, an
 
 
 ## Agent Architecture
-Meeting Notes · Email Summaries · HubSpot Tickets · AM Updates
-                          ↓
-              Zapier / Make / n8n (routing layer)
-                          ↓
-                   AccountIQ Agent
-                          ↓
-          Customer Profile → Stakeholder Briefs
-The MVP simulates source integrations to demonstrate agent behavior. In production, HubSpot webhooks, Gmail OAuth, and meeting note APIs (Gong, Otter.ai) would feed updates automatically.
-
+```text
+Meeting Notes
+Email Summaries
+HubSpot Tickets
+AM Updates
+        ↓
+AccountIQ Agent
+        ↓
+Customer Profile
+        ↓
+Stakeholder Briefs
+```
 
 ## Tools
 * HTML / CSS / JavaScript
