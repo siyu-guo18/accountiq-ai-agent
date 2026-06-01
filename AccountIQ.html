@@ -698,13 +698,14 @@ function getApiKey() {
 }
 
 async function callClaude(apiKey, system, userMsg) {
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey;
+  const url = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-001:generateContent?key=' + apiKey;
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      system_instruction: { parts: [{ text: system }] },
-      contents: [{ role: 'user', parts: [{ text: userMsg }] }],
+      contents: [{ role: 'user', parts: [{ text: system + '
+
+' + userMsg }] }],
       generationConfig: { maxOutputTokens: 1000, temperature: 0.3 }
     })
   });
