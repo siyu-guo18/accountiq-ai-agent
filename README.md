@@ -11,10 +11,10 @@ Customer information is fragmented across meeting notes, CRM tickets, emails, an
 
 ## Agent Architecture
 ```text
-Meeting Notes
-Email Summaries
-HubSpot Tickets
-AM Updates
+Meeting Notes (Gong, Otter.ai) CRM Updates (HubSpot)
+Email Conversations (Gmail) Account Manager Notes
+        ↓
+Zapier / Make / n8n
         ↓
 AccountIQ Agent
         ↓
@@ -24,6 +24,7 @@ Stakeholder Briefs
 ```
 
 ## Tools
+* Claude-Assisted Development
 * HTML / CSS / JavaScript
 * Gemini API
-* Claude-Assisted Development
+
