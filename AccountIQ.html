@@ -703,9 +703,7 @@ async function callClaude(apiKey, system, userMsg) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: system + '
-
-' + userMsg }] }],
+      contents: [{ role: 'user', parts: [{ text: system + ' ' + userMsg }] }],
       generationConfig: { maxOutputTokens: 1000, temperature: 0.3 }
     })
   });
