@@ -1,4 +1,6 @@
 ## Project Overview
+🚀 Live Demo: https://siyu-guo18.github.io/accountiq-ai-agent/AccountIQ%20Agent.html 
+
 Customer information is fragmented across meeting notes, CRM tickets, emails, and individual account managers' memories. AccountIQ acts as a centralized knowledge agent that reads incoming updates, maintains a structured customer profile, and generates different types of briefs depending on who needs the information and why.
 
 ## What It Does
