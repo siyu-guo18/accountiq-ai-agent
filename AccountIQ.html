@@ -740,7 +740,14 @@ async function processUpdates() {
 
   try {
     const text = await callClaude(apiKey, system, userMsg);
-    const clean = text.replace(/```json|```/g, '').trim();
+    // Extract JSON from response robustly
+    let clean = text.replace(/```json|```/g, '').trim();
+    // Find first { and last } to extract just the JSON object
+    const firstBrace = clean.indexOf('{');
+    const lastBrace = clean.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      clean = clean.substring(firstBrace, lastBrace + 1);
+    }
     const parsed = JSON.parse(clean);
 
     customerData[currentCustomer].pending = [];
