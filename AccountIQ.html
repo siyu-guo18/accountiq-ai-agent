@@ -758,11 +758,7 @@ async function processUpdates() {
     if (parsed.opps) customerData[currentCustomer].profile.opps = parsed.opps;
     if (parsed.actions) customerData[currentCustomer].profile.actions = parsed.actions;
     if (parsed.summary) {
-      customerData[currentCustomer].profileNote = customerData[currentCustomer].profileNote
-        + '
-
-AI UPDATE — Just now
-' + parsed.summary;
+      customerData[currentCustomer].profileNote = customerData[currentCustomer].profileNote + 'AI UPDATE: ' + parsed.summary;
     }
 
     renderCustomer(currentCustomer);
